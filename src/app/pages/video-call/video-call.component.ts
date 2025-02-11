@@ -1,4 +1,4 @@
-import {Component, ElementRef, OnInit, signal, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, OnInit, signal, ViewChild} from '@angular/core';
 import {FormsModule} from "@angular/forms";
 import {CommonModule} from "@angular/common";
 import {MediaConnection} from 'peerjs';
@@ -16,7 +16,7 @@ import {CdkDrag} from '@angular/cdk/drag-drop';
   templateUrl: './video-call.component.html',
   styleUrl: './video-call.component.css'
 })
-export class VideoCallComponent implements OnInit {
+export class VideoCallComponent implements OnInit, AfterViewInit {
   @ViewChild('source1') localVideo!: ElementRef<HTMLVideoElement>;
   @ViewChild('source2') remoteVideo!: ElementRef<HTMLVideoElement>;
   peerId = signal('');
@@ -27,6 +27,8 @@ export class VideoCallComponent implements OnInit {
   private localStream?: MediaStream;
   private localDisplayStream?: MediaStream;
   protected readonly window = window;
+  protected readonly history = history;
+
   isMuted = false;
   isPlaying = true;
   isScreenSharig = false;
@@ -36,20 +38,26 @@ export class VideoCallComponent implements OnInit {
   }
 
   async ngOnInit() {
-    await this.initLocalFlux()
-    this.getPeerInstance()
-    if (!history.state.isNew) {
-      console.log("this is an existing meet")
-      const remotePeerId = this.activatedRoute.snapshot.paramMap.get('peerId')
-      if (remotePeerId) {
-        this.remotePeerId.set(remotePeerId);
-        this.connectToRemote();
-      }
-    } else {
-      console.log("this is a new meet")
-    }
 
-    console.log(this.connected)
+  }
+
+  async ngAfterViewInit() {
+    await this.initLocalFlux().then(() => {
+      this.getPeerInstance()
+      if (!history.state.isNew) {
+        console.log("this is an existing meet")
+        const remote_peer_id = this.activatedRoute.snapshot.paramMap.get('peerId')
+        if (remote_peer_id) {
+          this.remotePeerId.set(remote_peer_id);
+          console.log("remotePeerId ", this.remotePeerId())
+          this.connectToRemote();
+        }
+      } else {
+        console.log("this is a new meet")
+      }
+
+      console.log(this.connected)
+    })
   }
 
   async initLocalFlux() {
@@ -76,35 +84,60 @@ export class VideoCallComponent implements OnInit {
 
   connectToRemote() {
     const peer = this.webrtcService.getPeer();
-    const call = peer.call(this.remotePeerId(), this.localStream!);
+
+    if (!this.remotePeerId() || !this.localStream) {
+      console.log("Remote Peer ID or local stream is missing, cannot initiate call.");
+      this.connectionStatus.set('Failed to initiate call');
+      return;
+    }
+
+    console.log(`Attempting to connect to remote peer: ${this.remotePeerId()}`);
+
+    const call = peer.call(this.remotePeerId(), this.localStream);
 
     if (call) {
       this.currentCall = call;
       this.handleCall(call);
     } else {
       this.connectionStatus.set('Failed to initiate call');
-      console.log(`the code is not valid failed to initiate call`, this.remotePeerId(), this.localStream);
+      console.log("The code is not valid, failed to initiate call", this.remotePeerId(), this.localStream);
+      this.remotePeerId.set('');
     }
   }
 
   private handleCall(call: MediaConnection) {
     this.currentCall = call;
+
     call.on('stream', (remoteStream) => {
-      this.remoteVideo.nativeElement.srcObject = remoteStream;
-      this.remoteVideo.nativeElement.muted = false;
-      this.remoteVideo.nativeElement.volume = 1.0;
+      console.log("Received remote stream", this.remoteVideo);
+
+      this.localVideo.nativeElement.srcObject = remoteStream;
+      this.localVideo.nativeElement.muted = false;
+      this.localVideo.nativeElement.volume = 1.0;
+      if (this.localStream) {
+        this.remoteVideo.nativeElement.srcObject = this.localStream;
+        this.remoteVideo.nativeElement.muted = true;
+      }
 
       this.connectionStatus.set('Connected');
       this.connected = true;
     });
 
+    call.on('close', () => {
+      console.log("Call ended by the remote peer.");
+      this.cleanupCall();
+    });
+
     call.on('error', (err) => {
-      console.error('Call error:', err);
+      console.error("Call error:", err);
       this.connectionStatus.set('Error connecting');
+      this.cleanupCall();
     });
   }
 
   disconnectCall() {
+    console.log("Disconnecting call...");
+
     if (this.currentCall) {
       this.currentCall.close();
       this.currentCall = undefined;
@@ -114,10 +147,27 @@ export class VideoCallComponent implements OnInit {
       this.localStream.getTracks().forEach(track => track.stop());
       this.localStream = undefined;
     }
+
+    if (this.localDisplayStream) {
+      this.localDisplayStream.getTracks().forEach(track => track.stop());
+      this.localDisplayStream = undefined;
+    }
+
     this.connectionStatus.set('Not connected');
     this.connected = false;
-    console.log('Call disconnected');
+    this.remotePeerId.set('');
+    console.log("Call disconnected successfully.");
     this.router.navigate(['/']);
+  }
+
+
+  private cleanupCall() {
+    if (this.currentCall) {
+      this.currentCall.close();
+      this.currentCall = undefined;
+    }
+    this.connectionStatus.set('Not connected');
+    this.connected = false;
   }
 
   copyLink() {
@@ -207,5 +257,4 @@ export class VideoCallComponent implements OnInit {
   }
 
 
-  protected readonly history = history;
 }

@@ -4,11 +4,12 @@
       <video #source1 class="w-full h-full" autoplay playsinline></video>
       <div *ngIf="!connected" [ngTemplateOutlet]="shareMeet"></div>
       <div
-        *ngIf="connected"
-        cdkDrag
-        cdkDragBoundary=".boundary"
+
         class="w-64 h-64 max-w-64 min-h-64 absolute bottom-0 right-0 fadeInTop">
-        <video #source2 class="w-full h-full" autoplay playsinline></video>
+        <video
+          cdkDrag
+          cdkDragBoundary=".boundary"
+          #source2 class="w-full h-full" autoplay playsinline></video>
       </div>
     </div>
     <div [ngTemplateOutlet]="meetControls"></div>
@@ -18,13 +19,16 @@
 
 <ng-template #shareMeet>
   <div
-    class="absolute bottom-0 left-0 drop-shadow-md w-full max-w-2xl p-5 bg-white  gap-2">
+    class="absolute bottom-0 left-0 drop-shadow-2xl w-full min-h-[6rem] max-w-2xl p-5 bg-white flex flex-col gap-2">
     <h1 class="text-xl font-black">Partager le lien de votre réunion</h1>
     @if (!this.isTextCopyActive) {
-      <span class="text-lg cursor-pointer fadeInTop" (click)="copyLink()">{{ window.location.href }} <i
-        class="fa-duotone fa-solid fa-copy text-blue-500"></i> </span>
+      <span class="text-lg cursor-pointer fadeInTop text-blue-500 flex" (click)="copyLink()">
+        <div class="w-full min-h-10 h-10 flex justify-start items-center border border-gray-200 px-1">{{ window.location.href }}</div>
+        <div class="w-10 h-10 bg-blue-500 flex justify-center items-center"><i
+          class="fa-duotone fa-solid fa-copy text-white"></i></div>
+      </span>
     } @else {
-      <span class="text-lg cursor-pointer fadeInTop">Lien copié</span>
+      <span class="text-lg cursor-pointer fadeInTop text-green-500">Lien copié avec succès</span>
     }
 
   </div>
