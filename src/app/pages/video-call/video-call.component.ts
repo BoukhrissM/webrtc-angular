@@ -80,6 +80,21 @@ export class VideoCallComponent implements OnInit, AfterViewInit {
       call.answer(this.localStream!); // Répondre avec le flux local
       this.handleCall(call);
     });
+
+    peer.on('close', () => {
+      console.log("Peer connection closed");
+      this.connectionStatus.set('Call ended');
+      this.cleanupCall();
+    })
+
+    // Listen for when the peer connection is lost
+    peer.on('disconnected', () => {
+      console.log("Peer disconnected");
+      this.connectionStatus.set('Disconnected');
+      this.cleanupCall();
+    });
+
+
   }
 
   connectToRemote() {
@@ -125,6 +140,7 @@ export class VideoCallComponent implements OnInit, AfterViewInit {
 
     call.on('close', () => {
       console.log("Call ended by the remote peer.");
+      this.connected = false;
       this.cleanupCall();
     });
 
