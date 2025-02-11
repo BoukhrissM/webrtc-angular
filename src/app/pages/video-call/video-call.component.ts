@@ -23,9 +23,11 @@ export class VideoCallComponent implements OnInit {
   connected = false;
   private currentCall?: MediaConnection;
   private localStream?: MediaStream;
+  private localDisplayStream?: MediaStream;
   protected readonly window = window;
   isMuted = false;
   isPlaying = true;
+  isScreenSharig = false;
 
   constructor(private webrtcService: WebrtcService, private activatedRoute: ActivatedRoute, private router: Router) {
   }
@@ -40,7 +42,7 @@ export class VideoCallComponent implements OnInit {
         this.remotePeerId.set(remotePeerId);
         this.connectToRemote();
       }
-    }else{
+    } else {
       console.log("this is a new meet")
     }
   }
@@ -76,7 +78,7 @@ export class VideoCallComponent implements OnInit {
       this.handleCall(call);
     } else {
       this.connectionStatus.set('Failed to initiate call');
-      console.log(`the code is not valid failed to initiate call`,this.remotePeerId(),this.localStream);
+      console.log(`the code is not valid failed to initiate call`, this.remotePeerId(), this.localStream);
     }
   }
 
@@ -127,30 +129,47 @@ export class VideoCallComponent implements OnInit {
       console.error('Failed to copy:', err);
     });
   }
-  isTextCopyActive:boolean = false;
-  showCopiedText(){
-     this.isTextCopyActive= true;
-     setTimeout(()=>{this.isTextCopyActive = false},2000);
+
+  isTextCopyActive: boolean = false;
+
+  showCopiedText() {
+    this.isTextCopyActive = true;
+    setTimeout(() => {
+      this.isTextCopyActive = false
+    }, 2000);
   }
 
 
   muteMicrophone() {
-    if(this.isMuted){
-        this.localStream?.getAudioTracks().forEach(track => track.enabled =true);
-        this.isMuted = false;
-    }else{
-        this.localStream?.getAudioTracks().forEach(track => track.enabled =false);
-        this.isMuted = true;
+    if (this.isMuted) {
+      this.localStream?.getAudioTracks().forEach(track => track.enabled = true);
+      this.isMuted = false;
+    } else {
+      this.localStream?.getAudioTracks().forEach(track => track.enabled = false);
+      this.isMuted = true;
     }
   }
 
-  hideCamera(){
-    if(this.isPlaying){
-      this.localStream?.getVideoTracks().forEach(track => track.enabled =false);
+  hideCamera() {
+    if (this.isPlaying) {
+      this.localStream?.getVideoTracks().forEach(track => track.enabled = false);
       this.isPlaying = false;
-    }else{
-      this.localStream?.getVideoTracks().forEach(track => track.enabled =true);
+    } else {
+      this.localStream?.getVideoTracks().forEach(track => track.enabled = true);
       this.isPlaying = true;
     }
   }
+
+  async shareScreen() {
+    if (this.isScreenSharig) {
+      await this.initLocalFlux()
+      this.isScreenSharig = false;
+    } else {
+      this.localDisplayStream = await this.webrtcService.initDisplayStream();
+      this.localVideo.nativeElement.srcObject = this.localDisplayStream;
+    }
+
+  }
+
+  protected readonly history = history;
 }

@@ -1,8 +1,8 @@
 <div class="w-full justify-center items-start">
-  <div class="w-full max-w-screen-2xl mx-auto min-h-screen p-2 flex justify-center flex-col">
+  <div class="w-full  mx-auto min-h-screen p-2 flex justify-center flex-col">
     <div class="w-full h-[90vh] rounded-md relative flex justify-center items-start">
       <video #source1 class="w-full h-full" autoplay playsinline></video>
-      <div *ngIf="!this.remotePeerId()" [ngTemplateOutlet]="shareMeet"></div>
+      <div *ngIf="history.state.isNew" [ngTemplateOutlet]="shareMeet"></div>
       <div
         class=" w-full border-2 bg-white border-blue-300 rounded-br-md max-w-64 min-h-64 absolute bottom-0 right-0">
         <video #source2 class="w-full h-full" autoplay playsinline></video>
@@ -37,18 +37,28 @@
       [ngClass]="this.isMuted?'bg-blue-500 text-white':'bg-transparent text-black'"
       class="w-16 h-16 rounded-full border border-blue-500 hover:bg-blue-500 hover:text-white transition-all cursor-pointer"
       (click)="muteMicrophone()">
-      <i
-        class="fa-regular fa-microphone-slash text-xl"></i></button>
-
+      <i class="fa-regular fa-microphone-slash text-xl"></i>
+    </button>
     <!-- hide camera -->
     <button
+      [ngClass]="!this.isPlaying?'bg-blue-500 text-white':'bg-transparent text-black'"
       class="w-16 h-16 rounded-full border border-blue-500 hover:bg-blue-500 hover:text-white transition-all cursor-pointer"
       (click)="hideCamera()">
-      <i
-        class="fa-regular fa-camera-slash text-xl"></i></button>
+      <i class="fa-regular fa-camera-slash text-xl"></i>
+    </button>
+
+
+    <!-- share screen -->
+    <button
+      [ngClass]="this.isScreenSharig?'bg-blue-500 text-white':'bg-transparent text-black'"
+      class="w-16 h-16 rounded-full border border-blue-500 hover:bg-blue-500 hover:text-white transition-all cursor-pointer"
+      (click)="shareScreen()">
+      <i class="fa-regular fa-screencast text-xl"></i>
+    </button>
 
     <button class="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 text-white transition-all cursor-pointer"
-            (click)="disconnectCall()"><i
-      class="fa-regular fa-phone-slash text-xl"></i></button>
+            (click)="disconnectCall()">
+      <i class="fa-regular fa-phone-slash text-xl"></i>
+    </button>
   </div>
 </ng-template>

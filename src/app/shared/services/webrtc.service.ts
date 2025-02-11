@@ -8,6 +8,7 @@ export class WebrtcService {
 
   private peer!:Peer;
   private localStream!: MediaStream;
+  private localScreenStream!:MediaStream;
   constructor() {
     this.peer = new Peer();
   }
@@ -18,6 +19,15 @@ export class WebrtcService {
       video: true
     })
     return this.localStream;
+  }
+
+  async initDisplayStream(){
+    this.localScreenStream =  await navigator.mediaDevices.getDisplayMedia({
+      video: true,
+      audio: true,
+    })
+
+    return this.localScreenStream;
   }
 
   getPeer(){
