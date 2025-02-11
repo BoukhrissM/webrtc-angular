@@ -1,15 +1,17 @@
 import {Component, ElementRef, OnInit, signal, ViewChild} from '@angular/core';
 import {FormsModule} from "@angular/forms";
-import {CommonModule, NgIf} from "@angular/common";
+import {CommonModule} from "@angular/common";
 import {MediaConnection} from 'peerjs';
 import {WebrtcService} from '../../shared/services/webrtc.service';
 import {ActivatedRoute, Router} from '@angular/router';
+import {CdkDrag} from '@angular/cdk/drag-drop';
 
 @Component({
   selector: 'app-video-call',
   imports: [
     CommonModule,
     FormsModule,
+    CdkDrag,
   ],
   templateUrl: './video-call.component.html',
   styleUrl: './video-call.component.css'
@@ -28,6 +30,7 @@ export class VideoCallComponent implements OnInit {
   isMuted = false;
   isPlaying = true;
   isScreenSharig = false;
+  isLocalPrimary = true;
 
   constructor(private webrtcService: WebrtcService, private activatedRoute: ActivatedRoute, private router: Router) {
   }
@@ -45,6 +48,8 @@ export class VideoCallComponent implements OnInit {
     } else {
       console.log("this is a new meet")
     }
+
+    console.log(this.connected)
   }
 
   async initLocalFlux() {
@@ -166,25 +171,29 @@ export class VideoCallComponent implements OnInit {
       await this.initLocalFlux();
       this.isScreenSharig = false;
 
-      // Replace the screen track with the camera track
-      const videoTrack = this.localStream?.getVideoTracks()[0];
-      this.replaceTrack(videoTrack);
+      // Restore the correct video
+      const videoTarget = this.isLocalPrimary ? this.localVideo : this.remoteVideo;
+      this.setVideoStream(this.localStream!, videoTarget);
+      this.replaceTrack(this.localStream?.getVideoTracks()[0]);
     } else {
       try {
         this.localDisplayStream = await this.webrtcService.initDisplayStream();
-        this.localVideo.nativeElement.srcObject = this.localDisplayStream;
         this.isScreenSharig = true;
 
-        // Replace the camera video track with the screen share track
-        const screenTrack = this.localDisplayStream.getVideoTracks()[0];
-        screenTrack.onended = () => this.shareScreen(); // Handle stop event
-        this.replaceTrack(screenTrack);
+        // Show screen share on the correct video element
+        const videoTarget = this.isLocalPrimary ? this.localVideo : this.remoteVideo;
+        this.setVideoStream(this.localDisplayStream, videoTarget);
+
+        // Replace the camera video track with the screen share track in WebRTC
+        this.replaceTrack(this.localDisplayStream.getVideoTracks()[0]);
+
+        // Stop sharing when the user exits
+        this.localDisplayStream.getVideoTracks()[0].onended = () => this.shareScreen();
       } catch (error) {
         console.error('Error sharing screen:', error);
       }
     }
   }
-
 
   replaceTrack(newTrack: MediaStreamTrack | undefined) {
     if (!newTrack || !this.currentCall) return;
@@ -196,10 +205,28 @@ export class VideoCallComponent implements OnInit {
 
     if (sender) {
       sender.replaceTrack(newTrack).then(() => {
-        console.log('Video track replaced successfully');
       }).catch(err => console.error('Error replacing track:', err));
     }
   }
+
+  swapStreams() {
+    // Swap the state variable
+    this.isLocalPrimary = !this.isLocalPrimary;
+    if (this.isLocalPrimary) {
+      // Move local stream back to source1 and remote to source2
+      this.setVideoStream(this.localStream!, this.localVideo);
+      this.setVideoStream(this.remoteVideo.nativeElement.srcObject as MediaStream, this.remoteVideo);
+    } else {
+      // Move remote stream to source1 and local stream to source2
+      this.setVideoStream(this.remoteVideo.nativeElement.srcObject as MediaStream, this.localVideo);
+      this.setVideoStream(this.localStream!, this.remoteVideo);
+    }
+  }
+
+  setVideoStream(stream: MediaStream, videoElement: ElementRef<HTMLVideoElement>) {
+    videoElement.nativeElement.srcObject = stream;
+  }
+
 
 
   protected readonly history = history;

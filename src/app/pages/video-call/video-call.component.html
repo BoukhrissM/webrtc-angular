@@ -1,17 +1,17 @@
 <div class="w-full justify-center items-start">
-  <div class="w-full  mx-auto min-h-screen p-2 flex justify-center flex-col">
-    <div class="w-full h-[90vh] rounded-md relative flex justify-center items-start">
+  <div   class="w-full  mx-auto h-screen p-2 flex justify-center flex-col ">
+    <div class="boundary w-full h-[90vh] rounded-md flex justify-center items-start relative">
       <video #source1 class="w-full h-full" autoplay playsinline></video>
-      <div *ngIf="history.state.isNew" [ngTemplateOutlet]="shareMeet"></div>
+      <div *ngIf="!connected" [ngTemplateOutlet]="shareMeet"></div>
       <div
-        class=" w-full border-2 bg-white border-blue-300 rounded-br-md max-w-64 min-h-64 absolute bottom-0 right-0">
-        <video #source2 class="w-full h-full" autoplay playsinline></video>
+        cdkDrag
+        cdkDragBoundary=".boundary"
+        class=" w-full border-2 bg-white border-blue-300  max-w-64 min-h-64 absolute bottom-0 right-0">
+        <video  #source2 class="w-full h-full" autoplay playsinline (click)="swapStreams()"></video>
       </div>
     </div>
     <div [ngTemplateOutlet]="meetControls"></div>
   </div>
-
-
 </div>
 
 
