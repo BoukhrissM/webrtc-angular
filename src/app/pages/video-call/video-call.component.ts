@@ -162,14 +162,45 @@ export class VideoCallComponent implements OnInit {
 
   async shareScreen() {
     if (this.isScreenSharig) {
-      await this.initLocalFlux()
+      // Stop screen sharing and revert to the local camera stream
+      await this.initLocalFlux();
       this.isScreenSharig = false;
-    } else {
-      this.localDisplayStream = await this.webrtcService.initDisplayStream();
-      this.localVideo.nativeElement.srcObject = this.localDisplayStream;
-    }
 
+      // Replace the screen track with the camera track
+      const videoTrack = this.localStream?.getVideoTracks()[0];
+      this.replaceTrack(videoTrack);
+    } else {
+      try {
+        this.localDisplayStream = await this.webrtcService.initDisplayStream();
+        this.localVideo.nativeElement.srcObject = this.localDisplayStream;
+        this.isScreenSharig = true;
+
+        // Replace the camera video track with the screen share track
+        const screenTrack = this.localDisplayStream.getVideoTracks()[0];
+        screenTrack.onended = () => this.shareScreen(); // Handle stop event
+        this.replaceTrack(screenTrack);
+      } catch (error) {
+        console.error('Error sharing screen:', error);
+      }
+    }
   }
+
+
+  replaceTrack(newTrack: MediaStreamTrack | undefined) {
+    if (!newTrack || !this.currentCall) return;
+
+    // Get the sender from the peer connection
+    const sender = this.currentCall.peerConnection
+      .getSenders()
+      .find(s => s.track?.kind === 'video');
+
+    if (sender) {
+      sender.replaceTrack(newTrack).then(() => {
+        console.log('Video track replaced successfully');
+      }).catch(err => console.error('Error replacing track:', err));
+    }
+  }
+
 
   protected readonly history = history;
 }
