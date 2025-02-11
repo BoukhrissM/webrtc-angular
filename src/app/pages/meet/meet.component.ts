@@ -1,0 +1,27 @@
+import {Component, signal} from '@angular/core';
+import {FormsModule} from '@angular/forms';
+import {CommonModule} from '@angular/common';
+import {Router} from '@angular/router';
+import {WebrtcService} from '../../shared/services/webrtc.service';
+
+@Component({
+  selector: 'app-meet',
+  imports: [CommonModule, FormsModule],
+  templateUrl: './meet.component.html',
+  styleUrl: './meet.component.css'
+})
+export class MeetComponent {
+  remotePeerId = signal('');
+
+  constructor(private webRtcService:WebrtcService,private router: Router) {
+  }
+
+  newMeeting() {
+    const peer = this.webRtcService.getPeer()
+    this.router.navigate([`/meet/${peer.id}`],{state:{isNew: true,peerId:peer.id}});
+  }
+
+  participateToMeet() {
+    this.router.navigate([`/meet/${this.remotePeerId()}`]);
+  }
+}

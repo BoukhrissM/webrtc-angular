@@ -1,0 +1,24 @@
+<div class="w-full justify-center items-start">
+  <div class="w-full max-w-screen-2xl mx-auto min-h-screen p-2 flex justify-center flex-col gap-3 ">
+    <div class="w-full h-[90vh] border border-gray-200 rounded-md relative flex justify-center items-start">
+      <video #source1 class="w-full h-full" autoplay playsinline></video>
+      <div [ngTemplateOutlet]="shareMeet"></div>
+      <div
+        class=" w-full border-2 bg-white border-blue-300 rounded-br-md max-w-64 min-h-64 absolute bottom-0 right-0">
+        <video #source2 class="w-full h-full" autoplay playsinline></video>
+      </div>
+    </div>
+
+
+  </div>
+
+</div>
+
+
+<ng-template #shareMeet>
+  <div
+    class="w-full max-w-[30rem] absolute p-5 bg-white-700 rounded-md bg-clip-padding backdrop-filter backdrop-blur-sm bg-opacity-70 border border-gray-100 gap-2">
+    <h1 class="text-xl font-black">Partager le lien de votre réunion</h1>
+    <span class="text-lg">{{window.history.state.peerId}}</span>
+  </div>
+</ng-template>
