@@ -1,24 +1,54 @@
 <div class="w-full justify-center items-start">
-  <div class="w-full max-w-screen-2xl mx-auto min-h-screen p-2 flex justify-center flex-col gap-3 ">
-    <div class="w-full h-[90vh] border border-gray-200 rounded-md relative flex justify-center items-start">
+  <div class="w-full max-w-screen-2xl mx-auto min-h-screen p-2 flex justify-center flex-col">
+    <div class="w-full h-[90vh] rounded-md relative flex justify-center items-start">
       <video #source1 class="w-full h-full" autoplay playsinline></video>
-      <div [ngTemplateOutlet]="shareMeet"></div>
+      <div *ngIf="!this.remotePeerId()" [ngTemplateOutlet]="shareMeet"></div>
       <div
         class=" w-full border-2 bg-white border-blue-300 rounded-br-md max-w-64 min-h-64 absolute bottom-0 right-0">
         <video #source2 class="w-full h-full" autoplay playsinline></video>
       </div>
     </div>
-
-
+    <div [ngTemplateOutlet]="meetControls"></div>
   </div>
+
 
 </div>
 
 
 <ng-template #shareMeet>
   <div
-    class="w-full max-w-[30rem] absolute p-5 bg-white-700 rounded-md bg-clip-padding backdrop-filter backdrop-blur-sm bg-opacity-70 border border-gray-100 gap-2">
+    class="absolute w-full max-w-2xl p-5 text-white bg-blue-500/20 rounded-md bg-clip-padding backdrop-filter backdrop-blur-sm bg-opacity-50 border border-gray-100 gap-2">
     <h1 class="text-xl font-black">Partager le lien de votre réunion</h1>
-    <span class="text-lg">{{window.history.state.peerId}}</span>
+    @if (!this.isTextCopyActive) {
+      <span class="text-lg cursor-pointer fadeInTop" (click)="copyLink()">{{ window.location.href }} <i
+        class="fa-duotone fa-solid fa-copy"></i> </span>
+    } @else {
+      <span class="text-lg cursor-pointer fadeInTop">Lien copié</span>
+    }
+
+  </div>
+</ng-template>
+
+
+<ng-template #meetControls>
+  <div class="w-full min-h-[8vh] flex justify-center items-center gap-5 transition-all p-1">
+    <!-- mute microphone -->
+    <button
+      [ngClass]="this.isMuted?'bg-blue-500 text-white':'bg-transparent text-black'"
+      class="w-16 h-16 rounded-full border border-blue-500 hover:bg-blue-500 hover:text-white transition-all cursor-pointer"
+      (click)="muteMicrophone()">
+      <i
+        class="fa-regular fa-microphone-slash text-xl"></i></button>
+
+    <!-- hide camera -->
+    <button
+      class="w-16 h-16 rounded-full border border-blue-500 hover:bg-blue-500 hover:text-white transition-all cursor-pointer"
+      (click)="hideCamera()">
+      <i
+        class="fa-regular fa-camera-slash text-xl"></i></button>
+
+    <button class="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 text-white transition-all cursor-pointer"
+            (click)="disconnectCall()"><i
+      class="fa-regular fa-phone-slash text-xl"></i></button>
   </div>
 </ng-template>

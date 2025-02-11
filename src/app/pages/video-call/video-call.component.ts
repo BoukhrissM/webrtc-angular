@@ -23,6 +23,9 @@ export class VideoCallComponent implements OnInit {
   connected = false;
   private currentCall?: MediaConnection;
   private localStream?: MediaStream;
+  protected readonly window = window;
+  isMuted = false;
+  isPlaying = true;
 
   constructor(private webrtcService: WebrtcService, private activatedRoute: ActivatedRoute, private router: Router) {
   }
@@ -81,8 +84,8 @@ export class VideoCallComponent implements OnInit {
     this.currentCall = call;
     call.on('stream', (remoteStream) => {
       this.remoteVideo.nativeElement.srcObject = remoteStream;
-      this.remoteVideo.nativeElement.muted = false; // 🔥 S'assurer que le son est activé
-      this.remoteVideo.nativeElement.volume = 1.0; // 🔊 Augmenter le volume
+      this.remoteVideo.nativeElement.muted = false;
+      this.remoteVideo.nativeElement.volume = 1.0;
 
       this.connectionStatus.set('Connected');
       this.connected = true;
@@ -114,7 +117,40 @@ export class VideoCallComponent implements OnInit {
     this.connectionStatus.set('Not connected');
     this.connected = false;
     console.log('Call disconnected');
+    this.router.navigate(['/']);
   }
 
-  protected readonly window = window;
+  copyLink() {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      this.showCopiedText()
+    }).catch(err => {
+      console.error('Failed to copy:', err);
+    });
+  }
+  isTextCopyActive:boolean = false;
+  showCopiedText(){
+     this.isTextCopyActive= true;
+     setTimeout(()=>{this.isTextCopyActive = false},2000);
+  }
+
+
+  muteMicrophone() {
+    if(this.isMuted){
+        this.localStream?.getAudioTracks().forEach(track => track.enabled =true);
+        this.isMuted = false;
+    }else{
+        this.localStream?.getAudioTracks().forEach(track => track.enabled =false);
+        this.isMuted = true;
+    }
+  }
+
+  hideCamera(){
+    if(this.isPlaying){
+      this.localStream?.getVideoTracks().forEach(track => track.enabled =false);
+      this.isPlaying = false;
+    }else{
+      this.localStream?.getVideoTracks().forEach(track => track.enabled =true);
+      this.isPlaying = true;
+    }
+  }
 }
