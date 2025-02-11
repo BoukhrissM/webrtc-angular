@@ -18,6 +18,7 @@ export class MeetComponent {
 
   newMeeting() {
     const peer = this.webRtcService.getPeer()
+    console.log(peer)
     this.router.navigate([`/meet/${peer.id}`],{state:{isNew: true,peerId:peer.id}});
   }
 

@@ -114,13 +114,6 @@ export class VideoCallComponent implements OnInit {
       this.localStream.getTracks().forEach(track => track.stop());
       this.localStream = undefined;
     }
-
-    if (this.remoteVideo.nativeElement.srcObject) {
-      (this.remoteVideo.nativeElement.srcObject as MediaStream).getTracks().forEach(track => track.stop());
-      this.remoteVideo.nativeElement.srcObject = null;
-    }
-
-    this.localVideo.nativeElement.srcObject = null;
     this.connectionStatus.set('Not connected');
     this.connected = false;
     console.log('Call disconnected');
@@ -209,24 +202,9 @@ export class VideoCallComponent implements OnInit {
     }
   }
 
-  swapStreams() {
-    // Swap the state variable
-    this.isLocalPrimary = !this.isLocalPrimary;
-    if (this.isLocalPrimary) {
-      // Move local stream back to source1 and remote to source2
-      this.setVideoStream(this.localStream!, this.localVideo);
-      this.setVideoStream(this.remoteVideo.nativeElement.srcObject as MediaStream, this.remoteVideo);
-    } else {
-      // Move remote stream to source1 and local stream to source2
-      this.setVideoStream(this.remoteVideo.nativeElement.srcObject as MediaStream, this.localVideo);
-      this.setVideoStream(this.localStream!, this.remoteVideo);
-    }
-  }
-
   setVideoStream(stream: MediaStream, videoElement: ElementRef<HTMLVideoElement>) {
     videoElement.nativeElement.srcObject = stream;
   }
-
 
 
   protected readonly history = history;
