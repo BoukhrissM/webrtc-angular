@@ -17,15 +17,17 @@ export class AppComponent implements OnInit {
   peerId = signal('');
   remotePeerId = signal('');
   connectionStatus = signal('Not connected');
-  connected:boolean = false;
+  connected = false;
   private currentCall?: MediaConnection;
+  private localStream?: MediaStream;
 
   constructor(private webrtcService: WebrtcService) {}
 
   async ngOnInit() {
-    // Initialisation du flux local
-    const stream = await this.webrtcService.initLocalStream();
-    this.localVideo.nativeElement.srcObject = stream;
+    // Initialisation du flux local (Vidéo + Audio)
+    this.localStream = await this.webrtcService.initLocalStream();
+    this.localVideo.nativeElement.srcObject = this.localStream;
+    this.localVideo.nativeElement.muted = true;
 
     // Récupération de l'instance Peer
     const peer = this.webrtcService.getPeer();
@@ -34,35 +36,40 @@ export class AppComponent implements OnInit {
       console.log(`Your Peer ID: ${id}`);
     });
 
-    // Réception des appels entrants
+    // Écouter les appels entrants et répondre avec le flux local
     peer.on('call', (call) => {
-      call.answer(stream); // Répondre avec le flux local
-      this.currentCall = call;
-      call.on('stream', (remoteStream) => {
-        this.remoteVideo.nativeElement.srcObject = remoteStream;
-      });
+      call.answer(this.localStream!); // Répondre avec le flux local
+      this.handleCall(call);
     });
   }
 
   connectToRemote() {
     const peer = this.webrtcService.getPeer();
-    const call = peer.call(this.remotePeerId(), this.localVideo.nativeElement.srcObject as MediaStream);
+    const call = peer.call(this.remotePeerId(), this.localStream!);
 
     if (call) {
       this.currentCall = call;
-      call.on('stream', (remoteStream) => {
-        this.remoteVideo.nativeElement.srcObject = remoteStream;
-        this.connectionStatus.set('Connected');
-        this.connected = true;
-      });
-
-      call.on('error', (err) => {
-        console.error('Call error:', err);
-        this.connectionStatus.set('Error connecting');
-      });
+      this.handleCall(call);
     } else {
       this.connectionStatus.set('Failed to initiate call');
     }
+  }
+
+  private handleCall(call: MediaConnection) {
+    this.currentCall = call;
+    call.on('stream', (remoteStream) => {
+      this.remoteVideo.nativeElement.srcObject = remoteStream;
+      this.remoteVideo.nativeElement.muted = false; // 🔥 S'assurer que le son est activé
+      this.remoteVideo.nativeElement.volume = 1.0; // 🔊 Augmenter le volume
+
+      this.connectionStatus.set('Connected');
+      this.connected = true;
+    });
+
+    call.on('error', (err) => {
+      console.error('Call error:', err);
+      this.connectionStatus.set('Error connecting');
+    });
   }
 
   disconnectCall() {
@@ -71,16 +78,17 @@ export class AppComponent implements OnInit {
       this.currentCall = undefined;
     }
 
-    if (this.localVideo.nativeElement.srcObject) {
-      (this.localVideo.nativeElement.srcObject as MediaStream).getTracks().forEach(track => track.stop());
+    if (this.localStream) {
+      this.localStream.getTracks().forEach(track => track.stop());
+      this.localStream = undefined;
     }
 
     if (this.remoteVideo.nativeElement.srcObject) {
       (this.remoteVideo.nativeElement.srcObject as MediaStream).getTracks().forEach(track => track.stop());
+      this.remoteVideo.nativeElement.srcObject = null;
     }
 
     this.localVideo.nativeElement.srcObject = null;
-    this.remoteVideo.nativeElement.srcObject = null;
     this.connectionStatus.set('Not connected');
     this.connected = false;
     console.log('Call disconnected');
