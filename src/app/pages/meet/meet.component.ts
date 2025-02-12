@@ -33,6 +33,12 @@ export class MeetComponent {
     this.router.navigate(['/room']);
   }
 
+  testTokenGeneration(){
+    this.livekitService.generateRoomToken("test","test").subscribe((res)=>{
+      console.log(res.token);
+    })
+  }
+
   participateToMeet() {
     this.router.navigate([`/meet/${this.remotePeerId()}`]);
   }
