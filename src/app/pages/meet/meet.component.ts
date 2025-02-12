@@ -30,9 +30,7 @@ export class MeetComponent {
   }
 
   newRoom() {
-    this.livekitService.connectToRoom(this.roomName,"boukhriss").then(value =>{
-      console.log(value);
-    })
+    this.router.navigate(['/room']);
   }
 
   participateToMeet() {
