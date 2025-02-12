@@ -82,6 +82,12 @@ app.use('/meet/**', (req, res, next) => {
 });
 
 
+
+app.use('/greetings', (req, res, next) => {
+  res.status(200).send({message: 'Hello World!'});
+});
+
+
 app.use('/**', (req, res, next) => {
   angularApp
     .handle(req)
@@ -91,6 +97,8 @@ app.use('/**', (req, res, next) => {
     .catch(next);
 
 });
+
+
 
 /**
  * Start the server if this module is the main entry point.
