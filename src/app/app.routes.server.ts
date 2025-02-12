@@ -1,8 +1,13 @@
-import { RenderMode, ServerRoute } from '@angular/ssr';
+import {RenderMode, ServerRoute} from '@angular/ssr';
 
 export const serverRoutes: ServerRoute[] = [
   {
     path: '**',
     renderMode: RenderMode.Prerender
+  },
+  {
+    path: 'meet/:peerId',
+    renderMode: RenderMode.Client
   }
+
 ];

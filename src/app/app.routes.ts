@@ -1,5 +1,7 @@
 import {Routes} from '@angular/router';
 
+
+
 export const routes: Routes = [
   {
     path: '',
@@ -8,6 +10,7 @@ export const routes: Routes = [
   {
     path: 'meet/:peerId',
     loadComponent: () => import('./pages/video-call/video-call.component').then(p => p.VideoCallComponent),
+
   },
   {
     path: 'room',
