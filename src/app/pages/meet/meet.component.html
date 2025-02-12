@@ -8,6 +8,10 @@
       <button (click)="newMeeting()"
               class="w-full md:w-auto px-5 py-2 text-lg font-bold text-white bg-blue-400 cursor-pointer rounded-full">Nouvelle réunion
       </button>
+
+      <button (click)="newRoom()"
+              class="w-full md:w-auto px-5 py-2 text-lg font-bold text-white bg-blue-400 cursor-pointer rounded-full">Appel de groupe
+      </button>
       <div class="flex items-center gap-2">
         <input [(ngModel)]="remotePeerId" type="text"
                class="w-full md:w-[20rem] py-2 px-4 rounded-full border border-gray-200 focus:outline-blue-300"

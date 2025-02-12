@@ -8,5 +8,9 @@ export const routes: Routes = [
   {
     path: 'meet/:peerId',
     loadComponent: () => import('./pages/video-call/video-call.component').then(p => p.VideoCallComponent),
+  },
+  {
+    path: 'room',
+    loadComponent: () => import('./pages/room/room.component').then(p => p.RoomComponent),
   }
 ];

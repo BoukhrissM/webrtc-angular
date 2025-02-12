@@ -3,6 +3,7 @@ import {FormsModule} from '@angular/forms';
 import {CommonModule} from '@angular/common';
 import {Router} from '@angular/router';
 import {WebrtcService} from '../../shared/services/webrtc.service';
+import {LivekitService} from '../../shared/services/livekit.service';
 
 @Component({
   selector: 'app-meet',
@@ -12,14 +13,26 @@ import {WebrtcService} from '../../shared/services/webrtc.service';
 })
 export class MeetComponent {
   remotePeerId = signal('');
+  roomName: string = "test-room";
 
-  constructor(private webRtcService:WebrtcService,private router: Router) {
+  constructor(
+    private webRtcService: WebrtcService,
+    private router: Router,
+    private livekitService: LivekitService,
+
+  ) {
   }
 
   newMeeting() {
     const peer = this.webRtcService.getPeer()
     console.log(peer)
-    this.router.navigate([`/meet/${peer.id}`],{state:{isNew: true,peerId:peer.id}});
+    this.router.navigate([`/meet/${peer.id}`], {state: {isNew: true, peerId: peer.id}});
+  }
+
+  newRoom() {
+    this.livekitService.connectToRoom(this.roomName,"boukhriss").then(value =>{
+      console.log(value);
+    })
   }
 
   participateToMeet() {
