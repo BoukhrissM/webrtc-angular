@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
 import {Room, RoomEvent} from 'livekit-client';
-import {firstValueFrom, Observable} from 'rxjs';
-import {HttpClient, HttpHeaders} from '@angular/common/http';
+import {firstValueFrom} from 'rxjs';
+import {HttpClient} from '@angular/common/http';
 import {environment} from '../../../environments/environment';
 
 // const { AccessToken } = require('livekit-server-sdk');
@@ -12,6 +12,7 @@ import {environment} from '../../../environments/environment';
 export class LivekitService {
   private room: Room | null = null;
   private wsUrl = environment.liveKitEndpoint;     // WebSocket signaling server
+  private TOKEN_ENDPOINT = environment.tokenGeneratorEndpoint;
 
   constructor(private http: HttpClient) {
 
@@ -50,7 +51,7 @@ export class LivekitService {
   }
 
   public generateRoomToken(nameParticipant: string, roomName: string) {
-    return this.http.get<{ token: string }>("/livekit/generate-token", {
+    return this.http.get<{ token: string }>(`${this.TOKEN_ENDPOINT}/livekit/generate-token`, {
       params: {
         nameParticipant,
         roomName
