@@ -34,9 +34,9 @@ export class MeetComponent {
   }
 
   testTokenGeneration(){
-    this.livekitService.generateRoomToken("test","test").subscribe((res)=>{
-      console.log(res.token);
-    })
+    // this.livekitService.generateRoomToken("test","test").subscribe((res)=>{
+    //   console.log(res.token);
+    // })
   }
 
   participateToMeet() {

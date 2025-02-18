@@ -8,6 +8,10 @@ export const serverRoutes: ServerRoute[] = [
   {
     path: 'meet/:peerId',
     renderMode: RenderMode.Client
+  },
+  {
+    path: 'room',
+    renderMode: RenderMode.Client
   }
 
 ];

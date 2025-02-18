@@ -12,7 +12,7 @@ import {environment} from '../../../environments/environment';
 export class LivekitService {
   private room: Room | null = null;
   private wsUrl = environment.liveKitEndpoint;     // WebSocket signaling server
-  private TOKEN_ENDPOINT = environment.tokenGeneratorEndpoint;
+  // private TOKEN_ENDPOINT = environment.tokenGeneratorEndpoint;
 
   constructor(private http: HttpClient) {
     this.room = new Room();
@@ -43,31 +43,31 @@ export class LivekitService {
   // }
 
 
-  async connectToRoom(roomName: string, userName: string): Promise<void> {
-    let rtcConf: RTCConfiguration = {
-      iceServers:[
-        {urls:[
-            'stun:stun.l.google.com:19302', // STUN server
-            'turn:myturnserver.com:3478?transport=udp', // TURN server (UDP)
-            'turn:myturnserver.com:3478?transport=tcp', // TURN server (TCP)
-          ],
-          username:"booukhriss",
-          credential:"booukhriss"
-        }
-      ],
-      iceTransportPolicy: "relay"
-    }
-    const resToken = await firstValueFrom(this.generateRoomToken(userName,roomName))
-    // Connect to the room
-    await this.room?.connect(this.wsUrl,resToken.token,{rtcConfig:rtcConf});
-    // Create local audio and video tracks
-    const audioTrack = await createLocalAudioTrack();
-    const videoTrack = await createLocalVideoTrack();
-    // Publish the tracks to the room
-    await this.room?.localParticipant.publishTrack(audioTrack);
-    await this.room?.localParticipant.publishTrack(videoTrack);
-    console.log(`Room ${roomName} created successfully`);
-  }
+  // async connectToRoom(roomName: string, userName: string): Promise<void> {
+  //   let rtcConf: RTCConfiguration = {
+  //     iceServers:[
+  //       {urls:[
+  //           'stun:stun.l.google.com:19302', // STUN server
+  //           'turn:myturnserver.com:3478?transport=udp', // TURN server (UDP)
+  //           'turn:myturnserver.com:3478?transport=tcp', // TURN server (TCP)
+  //         ],
+  //         username:"booukhriss",
+  //         credential:"booukhriss"
+  //       }
+  //     ],
+  //     iceTransportPolicy: "relay"
+  //   }
+  //   const resToken = await firstValueFrom(this.generateRoomToken(userName,roomName))
+  //   // Connect to the room
+  //   await this.room?.connect(this.wsUrl,resToken.token,{rtcConfig:rtcConf});
+  //   // Create local audio and video tracks
+  //   const audioTrack = await createLocalAudioTrack();
+  //   const videoTrack = await createLocalVideoTrack();
+  //   // Publish the tracks to the room
+  //   await this.room?.localParticipant.publishTrack(audioTrack);
+  //   await this.room?.localParticipant.publishTrack(videoTrack);
+  //   console.log(`Room ${roomName} created successfully`);
+  // }
 
 
 
@@ -78,12 +78,12 @@ export class LivekitService {
     }
   }
 
-  public generateRoomToken(nameParticipant: string, roomName: string) {
-    return this.http.get<{ token: string }>(`${this.TOKEN_ENDPOINT}/livekit/generate-token`, {
-      params: {
-        nameParticipant,
-        roomName
-      }
-    })
-  }
+  // public generateRoomToken(nameParticipant: string, roomName: string) {
+  //   return this.http.get<{ token: string }>(`${this.TOKEN_ENDPOINT}/livekit/generate-token`, {
+  //     params: {
+  //       nameParticipant,
+  //       roomName
+  //     }
+  //   })
+  // }
 }

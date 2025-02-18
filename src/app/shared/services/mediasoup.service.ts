@@ -1,14 +1,16 @@
 import { Injectable } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
+import {environment} from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class MediasoupService {
   private socket: Socket;
+  private socketUrl:string = environment.socketUrl;
 
   constructor() {
-    this.socket = io('http://localhost:3000'); // Connect to your Mediasoup server
+    this.socket = io(this.socketUrl); // Connect to your Mediasoup server
   }
 
   // Expose the emit method
