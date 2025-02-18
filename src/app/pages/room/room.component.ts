@@ -1,8 +1,8 @@
-import {AfterViewInit, Component, ElementRef, OnInit, ViewChild} from '@angular/core';
-import {LivekitService} from '../../shared/services/livekit.service';
+import {Component,  OnInit} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
-import {Participant, Room, RoomEvent, Track} from 'livekit-client';
+import {MediasoupService} from '../../shared/services/mediasoup.service';
+import {RTCService} from '../../shared/services/rtc.service';
 
 @Component({
   selector: 'app-room',
@@ -10,89 +10,76 @@ import {Participant, Room, RoomEvent, Track} from 'livekit-client';
   templateUrl: './room.component.html',
   styleUrl: './room.component.css'
 })
-export class RoomComponent implements AfterViewInit {
-  @ViewChild('localVideo') localVideoRef!: ElementRef;
-  @ViewChild('remoteVideos') remoteVideosRef!: ElementRef;  // Container for remote videos
+export class RoomComponent implements  OnInit {
+  localStream: MediaStream | null = null;
+  remoteStreams: { [key: string]: MediaStream } = {};
+  roomCode: string = '';
 
-  roomName: string = 'test-room';
-  userName: string = '';
-  room: Room | null = null;
-  isConnected: boolean = false;
-  localTrack: any;
-  remoteTracks: Track[] = [];  // Store remote tracks for multiple participants
+  constructor(
+    private rtcService: RTCService,
+    private mediasoupService: MediasoupService
+  ) {}
 
-  constructor(private livekitService: LivekitService) {
-  }
+  ngOnInit(): void {
+    this.mediasoupService.onDisconnect();
 
-  ngAfterViewInit() {
+    // Handle new remote streams
+    this.mediasoupService.onAddRemoteVideo(({ userId, remoteStream }) => {
+      this.addRemoteVideo(userId, remoteStream);
+    });
   }
 
   async joinRoom() {
-    if (this.roomName && this.userName) {
-      this.room = await this.livekitService.connectToRoom(this.roomName, this.userName);
-      console.log("room is : ", this.room);
-      this.isConnected = true;
-
-      // Get local media track (video and audio)
-      this.localTrack = await this.getLocalMedia();
-      if (this.localVideoRef) {
-        this.localVideoRef.nativeElement.srcObject = this.localTrack;
-        this.localVideoRef.nativeElement.muted = true;
-      }
-
-      // Listen for participants joining
-      this.room?.on(RoomEvent.ParticipantConnected, (participant: Participant) => {
-        console.log('Participant joined:', participant.identity);
-        // Loop through each track publication and get the underlying track
-        participant.trackPublications.forEach((publication) => {
-          if (publication.kind === 'video') {
-            // Access the track from the publication and pass it to addRemoteTrack
-            this.addRemoteTrack(publication.track as Track);
-          }
-        });
-      });
-
-      // Listen for remote track (when another participant starts publishing video/audio)
-      this.room?.on(RoomEvent.TrackSubscribed, (track) => {
-        if (track.kind === 'video') {
-          this.addRemoteTrack(track);
-        }
-      });
-
-      // Listen for disconnect events
-      this.room?.on(RoomEvent.Disconnected, () => {
-        this.isConnected = false;
-        this.room = null;
-        this.localTrack.stop();
-        this.localVideoRef.nativeElement.srcObject = null;
-      });
+    if (!this.roomCode) {
+      alert('Please enter a room code!');
+      return;
     }
-  }
 
-  // Get local media (audio and video)
-  async getLocalMedia() {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
-      return stream;
+      // Start local video/audio stream
+      this.localStream = await this.rtcService.startLocalStream();
+      this.addLocalVideo(this.localStream);
+
+      // Set up WebRTC transports and producers/consumers
+      await this.rtcService.setupWebRTC(this.roomCode);
+
+      // Notify server to join the room
+      this.mediasoupService.joinRoom(this.roomCode);
     } catch (error) {
-      console.error('Error accessing media devices:', error);
-      return null;
+      console.error('Error joining room:', error);
+      alert('Failed to join room. Please try again.');
     }
   }
 
-  // Handle remote tracks (participants' video/audio)
-  addRemoteTrack(track: Track) {
-    if (track.kind === 'video') {
-      this.remoteTracks.push(track);
-      const remoteVideo = document.createElement('video');
-      remoteVideo.autoplay = true;
-      remoteVideo.srcObject = track.mediaStream as MediaStream;
-      this.remoteVideosRef.nativeElement.appendChild(remoteVideo);
-    }
+  addLocalVideo(stream: MediaStream) {
+    const videoContainer = document.getElementById('video-container');
+    const videoElement = document.createElement('video');
+    videoElement.srcObject = stream;
+    videoElement.autoplay = true;
+    videoElement.muted = true; // Mute local video to avoid echo
+    videoElement.classList.add('w-full', 'h-auto', 'rounded-lg');
+    videoContainer?.appendChild(videoElement);
   }
 
-  disconnect() {
-    this.livekitService.disconnect();
-    this.isConnected = false;
+  addRemoteVideo(userId: string, stream: MediaStream) {
+    const videoContainer = document.getElementById('video-container');
+    const videoElement = document.createElement('video');
+    videoElement.srcObject = stream;
+    videoElement.autoplay = true;
+    videoElement.classList.add('w-full', 'h-auto', 'rounded-lg');
+    videoContainer?.appendChild(videoElement);
+
+    // Store the remote stream for cleanup
+    this.remoteStreams[userId] = stream;
+  }
+
+  ngOnDestroy() {
+    // Clean up streams when the component is destroyed
+    if (this.localStream) {
+      this.localStream.getTracks().forEach((track) => track.stop());
+    }
+    Object.values(this.remoteStreams).forEach((stream) => {
+      stream.getTracks().forEach((track) => track.stop());
+    });
   }
 }
